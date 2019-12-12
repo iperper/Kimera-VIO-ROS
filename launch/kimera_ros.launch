@@ -9,7 +9,11 @@
   <!-- !!!! VIT !!!! This should be true when running online with a rosbag publishing clock,
   but false when parsing rosbag? Needs rosbag to be publishing clock -->
   <param name="use_sim_time" value="true"/>
-  <arg name="rosbag_path" unless="$(arg online)"/>
+
+  <arg name="rosbag_path"/>
+
+  <!-- Not used, but needed to launch correctly   -->
+  <arg name="kf" />
 
   <!-- If true, SparkVio will log output of all modules to the
        'log_output_path' location. -->

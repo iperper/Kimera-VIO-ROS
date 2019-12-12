@@ -1,0 +1,78 @@
+<launch>
+  <arg name="dataset_name" value="Agbot"/>
+  <arg name="verbosity" default="0" />
+  <!-- <arg name="parallel" default="True"/> -->
+
+  <arg name="kf" default="false"/>
+
+  <!-- Set online to true if you use rosbag play or sensor stream -->
+  <arg name="online" default="true" />
+  <!-- Set use_sim_time to true if you use rosbag with clock argument -->
+  <param name="use_sim_time" value="true" if="$(arg online)"/>
+  <!-- <param name="use_sim_time" value="true"/> -->
+
+  <!-- Set log_output to true and SparkVio will log output of all modules to
+       the log_output_path location. -->
+  <arg name="log_output" default="true"/>
+  <arg name="log_output_path"
+    default="$(find kimera_ros)/output_logs/$(arg dataset_name)"
+       if="$(arg log_output)"/>
+  <!-- Set to true and specify gt_topic if you want to log ground-truth data -->
+  <arg name="log_gt_data" default="false"/>
+  <arg name="gt_topic" if="$(arg log_gt_data)"
+      default="/vicon/firefly_sbx/firefly_sbx"/>
+
+  <arg name="use_lcd"   default="false"/>
+  <arg name="visualize" default="false"/>
+
+  <!-- <arg name="rosbag_path" default="/home/iperper/Documents/VNAV/Walking_Dataset/agbot_sensors_realsense_2019-11-27-18-53-37.bag"/> -->
+  <!-- <arg name="rosbag_path" default="/home/iperper/Documents/VNAV/Data_9_26/agbot_sensors_realsense_2019-11-26-16-21-46.bag"/> -->
+
+  <!-- Handheld Dataset in lab in ChemE area (doesn't perform well) -->
+  <!-- <arg name="rosbag_path" default="/home/iperper/Documents/VNAV/Calibration/Handheld_Datasets/agbot_sensors_realsense_2019-12-03-16-29-54_trimmed.bag"/> -->
+  
+  <!-- Handheld Dataset out in hallway (performs well) -->
+  <!-- <arg name="rosbag_path" default="/home/iperper/Documents/VNAV/Calibration/Handheld_Datasets/agbot_sensors_realsense_2019-12-03-17-45-09.bag"/> -->
+
+  <!-- Rover dataset in lab with imu calibrated by chem area -->
+  <arg name="rosbag_path" default="/home/iperper/Documents/VNAV/Data_Project/Lab/agbot_sensors_realsense_2019-12-03-16-53-49.bag"/>
+
+  <!-- Rover dataset in lab without imu calibrated in machine shop -->
+  <!-- <arg name="rosbag_path" default="/home/iperper/Documents/VNAV/Data_Project/11_26/agbot_sensors_realsense_2019-11-26-16-21-46.bag"/> -->
+
+  <!-- Rover dataset in front of lobby 7 grass only -->
+  <!-- <arg name="rosbag_path" default="/home/iperper/Documents/VNAV/Data_Project/FrontOfLobby7/agbot_sensors_realsense_2019-12-01-14-24-43.bag"/> -->
+
+  <!-- Rover dataset in front of lobby 7 grass and gravel -->
+  <!-- <arg name="rosbag_path" default="/home/iperper/Documents/VNAV/Data_Project/FrontOfLobby7/agbot_sensors_realsense_2019-12-01-14-27-45.bag"/> -->
+  <!-- Frame IDs -->
+  <arg name="base_link_frame_id" value="base_link"/>
+
+    <!-- Subscribed Topics -->
+  <arg name="left_cam_topic" value="/camera/infra1/image_rect_raw"/>
+  <arg name="right_cam_topic" value="/camera/infra2/image_rect_raw"/>
+  <arg name="imu_topic" value="/kf/imu" if="$(arg kf)"/>
+  <arg name="imu_topic" value="/camera/imu" unless="$(arg kf)"/>
+
+  <!-- NOTE: Remap argmuments in launch file to not get parsed properly in offline mode -->
+
+  <!-- Launch actual pipeline -->
+  <include file="$(find kimera_ros)/launch/kimera_ros.launch"
+    pass_all_args="true"/>
+
+  <!-- <node pkg="agbot-kimera-launch" type="imu_republish.py" name="imu_republish"/> -->
+
+  <!-- Launch rosbag of agbot data -->
+  <!-- <node pkg="rosbag" type="play" name="player" output="log" args="-/-clock -s 10 $(find agbot-kimera-launch)/data/agbot_sensors_realsense_2019-11-21-13-02-39.bag"/> -->
+  <!-- <node pkg="rosbag" type="play" name="player" output="log" args="-/-clock -s 10 /home/iperper/Documents/VNAV/Data_9_26/agbot_sensors_realsense_2019-11-26-16-21-46.bag"/> -->
+  <node pkg="rosbag" type="play" name="player" output="log" args="--clock -s 2 $(arg rosbag_path)" if="$(arg online)"/>
+
+   <!-- Launch ROS Package Template Node -->
+  <rosparam command="load" file="$(find agbot_kf)/config/default.yaml" if="$(arg kf)"/>
+  <node pkg="agbot_kf" type="agbot_kf" name="agbot_kf" output="screen" if="$(arg kf)"/>
+
+  <!-- <node pkg="rosbag" type="record" name="recorder" unless="$(arg kf)" args="record -O $(find kimera_ros)/output_logs/Agbot/unfiltered /kimera_ros/optimized_trajectory /use_sim_time:=true"/> -->
+  <!-- <node pkg="rosbag" type="record" name="recorder" if="$(arg kf)" args="record -O $(find kimera_ros)/output_logs/Agbot/filtered /kimera_ros/optimized_trajectory /use_sim_time:=true"/> -->
+
+
+</launch>
